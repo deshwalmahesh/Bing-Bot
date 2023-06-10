@@ -1,0 +1,10 @@
+selenium
+pandas
+pandarallel
+tqdm
+streamlit
+streamlit-chat
+streamlit-extras
+psutil
+gtts
+fastapi
