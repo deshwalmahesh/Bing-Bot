@@ -2,15 +2,18 @@
 Bing Chat automated with Selenium Web Driver to exchange messages. All the functions are in `helpers.py` in clss `BingGPT4` class. Use `chat` function to interact.`app.py` is just a `streamlit` wrapper around it to show how it's working. Read the `Docstring`.
 
 
-Tested on `Ubuntu 20.04`. Needs to have `Edge`. You can use `sudo apt install microsoft-edge-dev`, `sudo apt install microsoft-edge-beta` or `sudo apt install microsoft-edge-stable` based on your OS. Alternatively [download it from here](https://www.microsoft.com/en-us/edge/download?form=MA13FJ)
++ Tested on `Ubuntu 20.04`. Needs to have `Edge`. You can use `sudo apt install microsoft-edge-dev`, `sudo apt install microsoft-edge-beta` or `sudo apt install microsoft-edge-stable` based on your OS. Alternatively [download it from here](https://www.microsoft.com/en-us/edge/download?form=MA13FJ)
 
 
-You need a Webdriver which can be downloaded via `wget https://msedgedriver.azureedge.net/114.0.1823.18/edgedriver_linux64.zip`  based on your **EDGE VERSION**
++ You need Edge Webdriver which can be downloaded [directly from this link](https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/) or via `wget https://msedgedriver.azureedge.net/114.0.1823.18/edgedriver_linux64.zip`. It is the file named `edge` here but you need to download based on **YOUR** OS and Edge Version.
+
+# 
 > __Warning__ 
-> MAKE SURE TO HAVE THE PATH OF THE `WebDriver` CORRECTLY AS IT IS USED TO LAUNCH THE DRIVER
+> Make sure that the path of `WebDriver` is CORRECTLY passed to `BingGPT4` class as it is used to launch the driver
 
 # 
 > __Note__:
-> I implemented almost everything except the timing part. Right now you have to wait for a fixed time before the response is returned. 
-If anyone can implement a dynamic version by checking regurlarly and returning the response as soon as it `finishes` (it can give half resilts too), please open a pull request.
+> I implemented almost everything except the response timing part. Right now you have to wait for a fixed time before the response is returned.
+> If You wait too less, it'll give you half result or maybe `ElementNotFound` error and if you wait too long, it's a waste of time.
+> So anyone having great knowledge of Selenium can implement a dynamic version by checking regurlarly and returning the response as soon as it finishes, please open a pull request.
 ```
