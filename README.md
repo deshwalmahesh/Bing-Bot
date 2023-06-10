@@ -8,7 +8,7 @@ Bing Chat automated with Selenium Web Driver to exchange messages. Read the `Doc
 # 
 + Tested on `Ubuntu 20.04`. Needs to have `Edge`. You can use `sudo apt install microsoft-edge-dev`, `sudo apt install microsoft-edge-beta` or `sudo apt install microsoft-edge-stable` based on your OS. Alternatively [download it from here](https://www.microsoft.com/en-us/edge/download?form=MA13FJ)
 
-# 
+
 + You need Edge Webdriver which can be downloaded [directly from this link](https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/) or via `wget https://msedgedriver.azureedge.net/114.0.1823.18/edgedriver_linux64.zip`. It is the file named `edge` here but you need to download based on **YOUR** OS and Edge Version.
 
 # 
