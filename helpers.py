@@ -13,7 +13,6 @@ import re, time, subprocess, psutil
 from multiprocessing import cpu_count
 from pandarallel import pandarallel
 
-
 pandarallel.initialize(nb_workers=cpu_count()-1)
 
 
@@ -21,10 +20,12 @@ def kill_all_existing_webdrivers(name = 'msedge'):
     '''
     This function kills all processes with the given name
     '''
+    print("KILLING ALL EXISTING WEBDRIVERS")
     for proc in psutil.process_iter(['pid', 'name']):
         if proc.info['name'] == name:
             try:
                 proc.kill()
+                print("INSIDE proc.kill()")
             except psutil.AccessDenied:
                 print(f"Access denied to kill process {proc.info['pid']}.")
             except Exception as e:
@@ -33,7 +34,7 @@ def kill_all_existing_webdrivers(name = 'msedge'):
 
 
 class BingGPT4:
-    def __init__(self, edge_webdriver = None, tone:str = "precise", wait_time:float = 45):
+    def __init__(self, edge_webdriver = None, tone:str = "precise", wait_time:float = 40):
         '''
         Open Edge Beta to interact with Bing chat
         args:
@@ -73,9 +74,7 @@ class BingGPT4:
         self._change_tone(tone)
 
         reach_chatbox_box_script = """
-        return document.querySelector('cib-serp').shadowRoot
-        .querySelector('cib-action-bar').shadowRoot
-        .querySelector('textarea[name="searchbox"]')
+        return document.querySelector('cib-serp').shadowRoot.querySelector('cib-action-bar').shadowRoot.querySelector('cib-text-input').shadowRoot.querySelector('textarea[id="searchbox"]')
         """
         self.chat_box = self.driver.execute_script(reach_chatbox_box_script)
         self.limit_counter = 0 # Reset the limit after reload
@@ -107,9 +106,21 @@ class BingGPT4:
         '''
         Get recent Response from the model. 
         '''
-        sleep_time = (self.wait_time - (time.time() - self.timer_start))
-        time.sleep(max(0, sleep_time))
+        bot_finished_responding = """return document.querySelector("#b_sydConvCont > cib-serp").shadowRoot
+        .querySelector("#cib-action-bar-main").shadowRoot
+        .querySelector("div > cib-typing-indicator").shadowRoot
+        .querySelector("#stop-responding-button > span").textContent"""
+        
+        bot_finished_responding_content = self.driver.execute_script(bot_finished_responding)
 
+        print("Waiting for response to finish...", flush=True, end=" ")
+
+        while bot_finished_responding_content=="Stop Responding": #Waiting for the "Stop responding"-button to dissappear.
+            time.sleep(3)
+            bot_finished_responding_content = self.driver.execute_script(bot_finished_responding)
+
+        print("Response finished.")
+        
         # Have escaped one { with another {
         bot_response_script = f"""
         var turns = document.querySelector('cib-serp').shadowRoot
@@ -126,9 +137,49 @@ class BingGPT4:
             }}}}
         }}}}
         return texts;"""
+
+        bot_response_script_html = f"""
+        var turns = document.querySelector('cib-serp').shadowRoot
+        .querySelector('cib-conversation').shadowRoot
+        .querySelectorAll('cib-chat-turn')[{self.limit_counter - 1}].shadowRoot
+        .querySelectorAll('cib-message-group')[1].shadowRoot
+        .querySelectorAll('cib-message');
+        
+        var texts = [];
+        for (var i = 0; i < turns.length; i++) {{{{
+            var shared = turns[i].shadowRoot.querySelector('cib-shared');
+            if (shared) {{{{
+                texts.push(shared.innerHTML);
+            }}}}
+        }}}}
+        return texts;"""
+
+        #Picks out the links that are attached:
+        link_selector = f"""
+        var all_resps = document.querySelector("#b_sydConvCont > cib-serp").shadowRoot.querySelector("#cib-conversation-main").shadowRoot.querySelectorAll("#cib-chat-main > cib-chat-turn");
+        var last_msg = all_resps[all_resps.length-1];
+        var rows = last_msg.shadowRoot.querySelector("cib-message-group.response-message-group").shadowRoot.querySelectorAll("cib-message");
+        var last_row = rows[rows.length-1]
+        var links = last_row.shadowRoot.querySelector("cib-message-attributions").shadowRoot.querySelectorAll("div > div.attribution-container > div > cib-attribution-item");
+        link_texts = [];
+        for (var i = 0; i < links.length; i++) {{{{
+            var link = links[i].shadowRoot.querySelector('a');
+            if (link) {{{{
+                link_texts.push(link.href);
+            }}}}
+        }}}};
+        return link_texts;
+        """
+        
+        
+        
+
+
         try:
             response = "\n".join(self.driver.execute_script(bot_response_script)).strip()
-            return response
+            html_response = "\n".join(self.driver.execute_script(bot_response_script_html)).strip()
+            reference_links =  "\n".join(self.driver.execute_script(link_selector)).strip()
+            return response, html_response, reference_links
         
         except: return "Unable to get response. Try increasing the wait 'delay' or Force Reload Bing"
     
@@ -167,7 +218,7 @@ class BingGPT4:
         '''
         query = query.strip()
         self._change_tone(tone)
-        
+        time.sleep(1)
         if self.limit_counter >= 5:
             self._reload_bing_chat(self.tone) # Reload the Chat again. Previous messages will be deleted and limit_cunter will be set to 0
 
@@ -185,7 +236,7 @@ class BingGPT4:
         self.timer_start = time.time()
         self.limit_counter += 1 # We only get 5 interactions
 
-        response = self._get_response()
+        response,html_response,reference_links = self._get_response()
         self.chat_history.append([query,response])
         self.total_interactions += 1
-        return response
+        return response,html_response,reference_links

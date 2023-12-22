@@ -93,8 +93,9 @@ with response_container:
     if user_input:
 
         with st.spinner(f"""Hold on!! Getting response in {st.session_state["delay"]} seconds"""):
-            response = st.session_state["agent"].chat(user_input, stream = True)
-
+            response, response_html, links = st.session_state["agent"].chat(user_input, stream = True)
+            print("Merging response and response links into one longer textstring.")
+            response = response + "\n\n" + links
         st.session_state.past.append(user_input)
         st.session_state.generated.append(response)
         
